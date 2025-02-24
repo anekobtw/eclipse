@@ -1,0 +1,10 @@
+aiogram==3.18.0
+ctypes_snappy==1.03
+leveldb==0.201
+name_that_hash==1.11.0
+pandas==2.2.3
+psutil==7.0.0
+pyasn1==0.6.1
+pycryptodome==3.21.0
+python-dotenv==1.0.1
+simplejson==3.20.1
