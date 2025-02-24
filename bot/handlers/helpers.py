@@ -63,7 +63,7 @@ async def dehash(hash: str) -> str | None:
         return None
 
 
-def parse_duration(duration_str):
+def parse_duration(duration_str) -> timedelta:
     match = re.match(r"(\d+)([dwm])", duration_str)
     if not match:
         raise ValueError("Invalid duration format")
@@ -75,6 +75,6 @@ def parse_duration(duration_str):
     elif unit == "w":
         return timedelta(weeks=num)
     elif unit == "m":
-        return timedelta(days=num * 30)  # Approximate 1 month as 30 days
+        return timedelta(days=num * 30)
     else:
         raise ValueError("Unsupported duration unit")

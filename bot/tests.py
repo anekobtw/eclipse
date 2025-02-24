@@ -1,5 +1,4 @@
-from bot.handlers.helpers import (get_hashtype, get_ip, get_user,
-                                  is_ip_address, text)
+from bot.handlers.helpers import get_hashtype, get_ip, get_user, is_ip_address, text
 
 
 def test_get_hashtype():
