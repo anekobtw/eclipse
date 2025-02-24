@@ -46,7 +46,7 @@ async def dehash(hash: str) -> str | None:
         await asyncio.sleep(3)
     hashcat_dir = os.path.join("hashcat-6.2.6")
     hashcat_executable = os.path.join(hashcat_dir, "hashcat.exe")
-    wordlist = os.path.join("rockyou.txt")
+    wordlist = os.path.join("dictionary.txt")
     unique_output = str(uuid.uuid4()) + ".txt"
 
     command = [hashcat_executable, "--potfile-disable", "-a", "0", "-m", str(get_hashtype(hash)), "-w", "4", "-d", "1", "-o", unique_output, hash, wordlist]
