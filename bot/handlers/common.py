@@ -68,7 +68,7 @@ async def _(message: types.Message) -> None:
 @router.callback_query(F.data.startswith("btn_watch"))
 async def _(callback: types.CallbackQuery) -> None:
     if ud.get_user(callback.from_user.id)[3] == 0:
-        await callback.message.answer("У вас закончился лимит. Обновление лимита будет в 00:00.")
+        await callback.message.answer(text("error_limit"))
         return
 
     ud.update_user(callback.from_user.id, "quota", ud.get_user(callback.from_user.id)[3] - 1)
@@ -77,6 +77,7 @@ async def _(callback: types.CallbackQuery) -> None:
     messages, buffer = [], ""
     for index, user in enumerate(user_data, start=1):
         details = {
+            "👤 Никнейм": user[0],
             "🔑 Пароль": user[1],
             "🔒 Хеш": user[2],
             "🌍 Айпи": user[3],

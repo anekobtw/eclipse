@@ -22,7 +22,8 @@ async def _(message: types.Message) -> None:
         try:
             subscription, time, uses_left = args[1], args[2], args[3]
         except IndexError:
-            await message.answer("Недостаточно аргументов")
+            await message.answer(text("ref_error"))
+            return
         if subscription in ["premium", "premium+"] and parse_duration(time):
             id = str(uuid.uuid4())
             refd.add_refid(id, uses_left, subscription, time)

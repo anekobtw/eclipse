@@ -107,11 +107,11 @@ class BasesDatabase(BaseDatabase):
                 )
             """,
         )
-        self.execute("CREATE INDEX IF NOT EXISTS idx_username ON bases (username)")
+        self.execute("CREATE INDEX IF NOT EXISTS idx_username_nocase ON bases(username COLLATE NOCASE)")
         self.execute("CREATE INDEX IF NOT EXISTS idx_ip ON bases (ip)")
 
     def get_user(self, username: str) -> Optional[tuple]:
-        return self.fetchall("SELECT * FROM bases WHERE username = ?", (username,))
+        return self.fetchall("SELECT * FROM bases WHERE username COLLATE NOCASE = ?", (username,))
 
     def get_by_ip(self, ip: str) -> Optional[tuple]:
         return self.fetchall("SELECT * FROM bases WHERE ip = ?", (ip,))
