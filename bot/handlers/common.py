@@ -11,7 +11,7 @@ ud = UsersDatabase()
 
 
 @router.message(F.text)
-async def process_message(message: types.Message) -> None:
+async def _(message: types.Message) -> None:
     try:
         txt = message.text
 
@@ -68,13 +68,26 @@ async def process_message(message: types.Message) -> None:
 @router.callback_query(F.data.startswith("btn_watch"))
 async def _(callback: types.CallbackQuery) -> None:
     ud.update_user(callback.from_user.id, "quota", ud.get_user(callback.from_user.id)[3] - 1)
-    nickname = callback.data[10:]
-    data = bd.get_user(nickname)
+    user_data = bd.get_user(callback.data[10:])
 
-    message, c = "", 0
-    for user in data:
-        message += f"🔑 <b>Пароль:</b> <code>{user[1]}</code>\n" f"🔒 <b>Хеш:</b> <code>{user[2]}</code>\n" f"🌍 <b>Айпи:</b> <code>{user[3]}</code>\n" f"💻 <b>Сервер:</b> <code>{user[4]}</code>\n" "────────────────────────────\n"
-        c += 1
-        if c == 5:
-            await callback.message.answer(message)
-            message, c = "", 0
+    messages, buffer = [], ""
+    for index, user in enumerate(user_data, start=1):
+        details = {
+            "🔑 Пароль": user[1],
+            "🔒 Хеш": user[2],
+            "🌍 Айпи": user[3],
+            "💻 Сервер": user[4],
+        }
+
+        entry = "\n".join(f"{key}: <code>{value}</code>" for key, value in details.items() if value)
+        buffer += f"{entry}\n\n"
+        
+        if index % 5 == 0:
+            messages.append(buffer)
+            buffer = ""
+
+    if buffer:
+        messages.append(buffer)
+    
+    for msg in messages:
+        await callback.message.answer(msg)
