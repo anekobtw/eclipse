@@ -38,18 +38,18 @@ async def _(message: types.Message, command: CommandObject) -> None:
             ud.add_user(message.from_user.id, "free", None, 5, 0)
             ud.update_user(int(command.args), "invited", ud.get_user(int(command.args))[4] + 1)
     else:
-        ref = RefIDsDatabase.get_refid(command.args)
+        ref = refd.get_refid(command.args)
         if ref:
             if ud.get_user(message.from_user.id)[1] == "premium+" and ref[2] == "premium":
                 await message.answer("Подождите пока у вас закончится нынешний тариф.")
                 return
-            ud.update_user(message.from_user.id, "subscription", ref[2])
             if ud.get_user(message.from_user.id)[1] == "free":
                 ud.update_user(message.from_user.id, "subscription_until", datetime.now() + parse_duration(ref[3]))
             else:
                 ud.update_user(message.from_user.id, "subscription_until", datetime.strptime(ud.get_user(message.from_user.id)[2], "%Y-%m-%d %H:%M:%S.%f") + parse_duration(ref[3]))
+            ud.update_user(message.from_user.id, "subscription", ref[2])
             ud.update_user(message.from_user.id, "quota", {"free": 5, "premium": 20, "premium+": 100}[ref[2]])
-        RefIDsDatabase.use_refid(command.args)
+        refd.use_refid(command.args)
     await message.answer(text("welcome"), reply_markup=start_kb())
 
 

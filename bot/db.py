@@ -56,6 +56,9 @@ class UsersDatabase(BaseDatabase):
     def get_user(self, user_id: int) -> Optional[tuple]:
         return self.fetchone("SELECT * FROM users WHERE user_id = ? LIMIT 1", (user_id,))
 
+    def get_all(self) -> list[tuple]:
+        return self.fetchall("SELECT * FROM users")
+
     def update_user(self, user_id: int, key: str, value: Any) -> None:
         if key not in ("subscription", "subscription_until", "quota", "invited"):
             raise ValueError(f"Invalid column name: {key}")

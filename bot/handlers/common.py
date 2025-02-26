@@ -67,6 +67,10 @@ async def _(message: types.Message) -> None:
 
 @router.callback_query(F.data.startswith("btn_watch"))
 async def _(callback: types.CallbackQuery) -> None:
+    if ud.get_user(callback.from_user.id)[3] == 0:
+        await callback.message.answer("У вас закончился лимит. Обновление лимита будет в 00:00.")
+        return
+
     ud.update_user(callback.from_user.id, "quota", ud.get_user(callback.from_user.id)[3] - 1)
     user_data = bd.get_user(callback.data[10:])
 
