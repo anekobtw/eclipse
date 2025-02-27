@@ -1,6 +1,5 @@
 aiogram==3.18.0
 APScheduler==3.11.0
-ctypes-snappy==1.03
 leveldb==0.201
 name_that_hash==1.11.0
 psutil==7.0.0
