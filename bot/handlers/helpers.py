@@ -47,7 +47,7 @@ async def dehash(hash: str) -> str | None:
     wordlist = os.path.join("dictionary.txt")
     unique_output = str(uuid.uuid4()) + ".txt"
 
-    command = ["hashcat", "--potfile-disable", "-O", "--workload-profile", "1", "-a", "0", "-m", str(get_hashtype(hash)), "-w", "4", "-d", "1", "-o", unique_output, hash, wordlist]
+    command = ["hashcat", "--potfile-disable", "-O", "--workload-profile", "1", "-a", "0", "-m", str(get_hashtype(hash)), "-w", "1", "-d", "1", "-o", unique_output, hash, wordlist]
     process = await asyncio.create_subprocess_exec(*command)
     await process.communicate()
 
