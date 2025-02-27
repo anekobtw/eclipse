@@ -1,17 +1,19 @@
 import asyncio
 import logging
 import os
+from datetime import datetime
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
-from dotenv import load_dotenv
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from datetime import datetime
-from handlers import router
+from dotenv import load_dotenv
+
 from db import UsersDatabase
+from handlers import router
 
 ud = UsersDatabase()
+
 
 async def check_users() -> None:
     users = ud.get_all()
@@ -21,6 +23,7 @@ async def check_users() -> None:
                 ud.update_user(user[0], "subscription", "free")
                 ud.update_user(user[0], "subscription_until", None)
                 ud.update_user(user[0], "quota", 5)
+
 
 async def reset_limits() -> None:
     users = ud.get_all()
@@ -39,9 +42,8 @@ async def run_bot() -> None:
 
     scheduler = AsyncIOScheduler()
     scheduler.add_job(check_users, "interval", minutes=1)
-    scheduler.add_job(reset_limits, "cron", hour=0, minute=0) 
+    scheduler.add_job(reset_limits, "cron", hour=0, minute=0)
     scheduler.start()
-
 
     bot = Bot(token=os.getenv("TOKEN"), default=DefaultBotProperties(parse_mode="HTML"))
     storage = MemoryStorage()

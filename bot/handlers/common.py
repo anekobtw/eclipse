@@ -29,7 +29,7 @@ async def _(message: types.Message) -> None:
             usernames = len([row[0] for row in ip_info if row[0] is not None])
             hashes = len([row[2] for row in ip_info if row[2] is not None])
             passwords = len([row[1] for row in ip_info if row[1] is not None])
-            
+
             await message.answer(
                 text("ip_info").format(
                     ip=txt,
@@ -37,7 +37,7 @@ async def _(message: types.Message) -> None:
                     hashes=f"найдено ({hashes})" if hashes > 0 else "не найдено",
                     passwords=f"найдено ({passwords})" if passwords > 0 else "не найдено",
                 ),
-                reply_markup=subscription_kb(txt, any([usernames>0, hashes>0, passwords>0])),
+                reply_markup=subscription_kb(txt, any([usernames > 0, hashes > 0, passwords > 0])),
             )
             return
 
@@ -57,7 +57,7 @@ async def _(message: types.Message) -> None:
                 passwords=f"найдено ({passwords})" if passwords > 0 else "не найдено",
                 ips=f"найдено ({ips})" if ips > 0 else "не найдено",
             ),
-            reply_markup=subscription_kb(txt, any([hashes>0, passwords>0, ips>0])),
+            reply_markup=subscription_kb(txt, any([hashes > 0, passwords > 0, ips > 0])),
         )
 
     except Exception as e:
@@ -86,13 +86,13 @@ async def _(callback: types.CallbackQuery) -> None:
 
         entry = "\n".join(f"{key}: <code>{value}</code>" for key, value in details.items() if value)
         buffer += f"{entry}\n\n"
-        
+
         if index % 5 == 0:
             messages.append(buffer)
             buffer = ""
 
     if buffer:
         messages.append(buffer)
-    
+
     for msg in messages:
         await callback.message.answer(msg)

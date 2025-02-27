@@ -33,14 +33,14 @@ def back_kb() -> types.InlineKeyboardMarkup:
 
 
 def purchase_kb(back: bool = False) -> types.InlineKeyboardMarkup:
-    buttons = [[types.InlineKeyboardButton(text="Приобрести (вручную)", url="https://t.me/tsarbgvidon")]]
+    buttons = [[types.InlineKeyboardButton(text="Приобрести (вручную)", url="https://t.me/ophanix")]]
     if back:
         buttons.append([types.InlineKeyboardButton(text="← Назад", callback_data="btn_back")])
     return types.InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
 def support_kb(back: bool = False) -> types.InlineKeyboardMarkup:
-    buttons = [[types.InlineKeyboardButton(text="Связаться", url="https://t.me/tsarbgvidon")]]
+    buttons = [[types.InlineKeyboardButton(text="Связаться", url="https://t.me/ophanix")]]
     if back:
         buttons.append([types.InlineKeyboardButton(text="← Назад", callback_data="btn_back")])
     return types.InlineKeyboardMarkup(inline_keyboard=buttons)

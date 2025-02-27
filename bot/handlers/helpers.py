@@ -44,20 +44,17 @@ def is_hashcat_running() -> bool:
 async def dehash(hash: str) -> str | None:
     while is_hashcat_running():
         await asyncio.sleep(3)
-    hashcat_dir = os.path.join("hashcat-6.2.6")
-    hashcat_executable = os.path.join(hashcat_dir, "hashcat.exe")
     wordlist = os.path.join("dictionary.txt")
     unique_output = str(uuid.uuid4()) + ".txt"
 
-    command = [hashcat_executable, "--potfile-disable", "-a", "0", "-m", str(get_hashtype(hash)), "-w", "4", "-d", "1", "-o", unique_output, hash, wordlist]
-    process = await asyncio.create_subprocess_exec(*command, cwd=hashcat_dir)
+    command = ["hashcat", "--potfile-disable", "-a", "0", "-m", str(get_hashtype(hash)), "-w", "4", "-d", "1", "-o", unique_output, hash, wordlist]
+    process = await asyncio.create_subprocess_exec(*command)
     await process.communicate()
 
     try:
-        filepath = os.path.join(hashcat_dir, unique_output)
-        with open(filepath, "r") as f:
+        with open(unique_output, "r") as f:
             password = f.readline().strip().split(":")[1]
-        os.remove(filepath)
+        os.remove(unique_output)
         return password
     except FileNotFoundError:
         return None

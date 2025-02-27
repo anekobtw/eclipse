@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 
 from aiogram import F, Router, types
@@ -6,8 +7,6 @@ from aiogram.filters import Command, CommandObject, CommandStart
 from db import RefIDsDatabase, UsersDatabase
 from handlers.helpers import parse_duration, text
 from handlers.keyboards import back_kb, purchase_kb, start_kb, support_kb
-import uuid
-
 
 router = Router()
 ud = UsersDatabase()

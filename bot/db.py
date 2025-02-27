@@ -1,6 +1,6 @@
 import sqlite3
-from typing import Any, Optional, Literal
 from contextlib import closing
+from typing import Any, Literal, Optional
 
 
 class BaseDatabase:
