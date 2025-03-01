@@ -37,7 +37,7 @@ class BaseDatabase:
 class UsersDatabase(BaseDatabase):
     def __init__(self) -> None:
         super().__init__(
-            db_path="bot_databases/usersdb.db",
+            db_path="databases/usersdb.db",
             schema="""
                 CREATE TABLE IF NOT EXISTS users (
                     user_id INTEGER,
@@ -68,7 +68,7 @@ class UsersDatabase(BaseDatabase):
 class RefIDsDatabase(BaseDatabase):
     def __init__(self) -> None:
         super().__init__(
-            db_path="bot_databases/refids.db",
+            db_path="databases/refids.db",
             schema="""
                 CREATE TABLE IF NOT EXISTS refids (
                     ref_id TEXT,

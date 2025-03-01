@@ -1,19 +1,26 @@
-import asyncio
 import json
-import os
 import re
-import sys
-import uuid
 from datetime import timedelta
 
-import psutil
 from name_that_hash import check_hashes, hash_namer, hashes
 
 
 # Random
 def text(tag: str) -> str:
-    texts = json.load(open("texts.json", "r", encoding="UTF-8"))
+    texts = json.load(open("config/texts.json", "r", encoding="UTF-8"))
     return texts[tag]
+
+
+def convert_authme_sha256(authme_hash) -> str:
+    if not authme_hash.startswith("$SHA$"):
+        raise ValueError("Invalid AuthMe hash format")
+
+    parts = authme_hash.split("$")
+    if len(parts) != 4:
+        raise ValueError("Malformed AuthMe hash")
+
+    salt, hash_value = parts[2], parts[3]
+    return f"$dynamic_82${hash_value}${salt}"
 
 
 def get_hashtype(hash: str) -> int | None:
@@ -21,7 +28,7 @@ def get_hashtype(hash: str) -> int | None:
     checker = check_hashes.HashChecker({"verbose": 1, "file": None, "greppable": False, "base64": False, "accessible": False, "extreme": False, "no_banner": False, "no_john": False, "no_hashcat": False}, nth=nth)
     checker.single_hash(hash)
     try:
-        return checker.output[0].get_prototypes()[0]["hashcat"]
+        return checker.output[0].get_prototypes()
     except IndexError:
         return None
 
@@ -29,35 +36,6 @@ def get_hashtype(hash: str) -> int | None:
 def is_ip_address(text: str) -> bool:
     ip_pattern = re.compile(r"^(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\." r"(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\." r"(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\." r"(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$")
     return bool(ip_pattern.match(text))
-
-
-# Hashcat
-def is_hashcat_running() -> bool:
-    executable_name = "hashcat.exe" if sys.platform == "win32" else "hashcat"
-
-    for proc in psutil.process_iter(["pid", "name"]):
-        if proc.info["name"] == executable_name:
-            return True
-    return False
-
-
-async def dehash(hash: str) -> str | None:
-    while is_hashcat_running():
-        await asyncio.sleep(3)
-    wordlist = os.path.join("dictionary.txt")
-    unique_output = str(uuid.uuid4()) + ".txt"
-
-    command = ["hashcat", "--potfile-disable", "-O", "--workload-profile", "1", "-a", "0", "-m", str(get_hashtype(hash)), "-w", "1", "-d", "1", "-o", unique_output, hash, wordlist]
-    process = await asyncio.create_subprocess_exec(*command)
-    await process.communicate()
-
-    try:
-        with open(unique_output, "r") as f:
-            password = f.readline().strip().split(":")[1]
-        os.remove(unique_output)
-        return password
-    except FileNotFoundError:
-        return None
 
 
 def parse_duration(duration_str) -> timedelta:

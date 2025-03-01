@@ -16,9 +16,10 @@ async def _(message: types.Message) -> None:
         txt = message.text
 
         if helpers.get_hashtype(txt):
-            password = await helpers.dehash(txt)
-            await message.answer(text("dehash_succeeded").format(password=password or "не найдено"))
-            return
+            hashes = [h for h in helpers.get_hashtype(txt) if h["hashcat"] is not None]
+            if hashes:
+                await message.answer(f"Это скорее всего хеш <code>{hashes[0]["name"]}</code>\nК сожалению, мы не можем его расшифровать")
+                return
 
         if helpers.is_ip_address(txt):
             ip_info = bd.get_by_ip(txt)
