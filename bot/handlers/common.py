@@ -73,7 +73,7 @@ async def _(callback: types.CallbackQuery) -> None:
         return
 
     ud.update_user(callback.from_user.id, "quota", ud.get_user(callback.from_user.id)[3] - 1)
-    user_data = bd.get_user(callback.data[10:])
+    user_data = bd.get_by_ip(callback.data[10:]) if helpers.is_ip_address(callback.data[10:]) else bd.get_user(callback.data[10:])
 
     messages, buffer = [], ""
     for index, user in enumerate(user_data, start=1):
