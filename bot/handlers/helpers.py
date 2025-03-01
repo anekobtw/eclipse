@@ -11,18 +11,6 @@ def text(tag: str) -> str:
     return texts[tag]
 
 
-def convert_authme_sha256(authme_hash) -> str:
-    if not authme_hash.startswith("$SHA$"):
-        raise ValueError("Invalid AuthMe hash format")
-
-    parts = authme_hash.split("$")
-    if len(parts) != 4:
-        raise ValueError("Malformed AuthMe hash")
-
-    salt, hash_value = parts[2], parts[3]
-    return f"$dynamic_82${hash_value}${salt}"
-
-
 def get_hashtype(hash: str) -> int | None:
     nth = hash_namer.Name_That_Hash(hashes.prototypes)
     checker = check_hashes.HashChecker({"verbose": 1, "file": None, "greppable": False, "base64": False, "accessible": False, "extreme": False, "no_banner": False, "no_john": False, "no_hashcat": False}, nth=nth)
