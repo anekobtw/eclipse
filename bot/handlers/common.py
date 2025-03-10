@@ -10,56 +10,53 @@ bd = BasesDatabase()
 ud = UsersDatabase()
 
 
+def search_ip(ip: str) -> list:
+    ip_info = bd.get_by_ip(ip)
+    if not ip_info:
+        return [text("ip_not_found"), None]
+
+    usernames = len([row[0] for row in ip_info if row[0] is not None])
+    hashes = len([row[2] for row in ip_info if row[2] is not None])
+    passwords = len([row[1] for row in ip_info if row[1] is not None])
+
+    return [text("ip_info").format(
+            ip=ip,
+            usernames=f"найдено ({usernames})" if usernames > 0 else "не найдено",
+            hashes=f"найдено ({hashes})" if hashes > 0 else "не найдено",
+            passwords=f"найдено ({passwords})" if passwords > 0 else "не найдено",
+        ), subscription_kb(ip, any([usernames>0, hashes>0, passwords>0]))]
+
+
+def search_user(user: str) -> list:
+    user_info = bd.get_user(user)
+    if not user_info:
+        return [text("user_not_found"), None]
+
+    hashes = len([row[2] for row in user_info if row[2] is not None])
+    passwords = len([row[1] for row in user_info if row[1] is not None])
+    ips = len([row[3] for row in user_info if row[3] is not None])
+
+    return [text("user_info").format(
+            username=user,
+            hashes=f"найдено ({hashes})" if hashes > 0 else "не найдено",
+            passwords=f"найдено ({passwords})" if passwords > 0 else "не найдено",
+            ips=f"найдено ({ips})" if ips > 0 else "не найдено",
+        ), subscription_kb(user, any([ips>0, hashes>0, passwords>0]))]
+
+
 @router.message(F.text)
 async def _(message: types.Message) -> None:
     try:
-        txt = message.text
-
-        if helpers.get_hashtype(txt):
-            hashes = [h for h in helpers.get_hashtype(txt) if h["hashcat"] is not None]
-            if hashes:
-                await message.answer(f"Это скорее всего хеш <code>{hashes[0]["name"]}</code>\nК сожалению, мы не можем его расшифровать")
-                return
-
-        if helpers.is_ip_address(txt):
-            ip_info = bd.get_by_ip(txt)
-            if not ip_info:
-                await message.answer(text("ip_not_found"))
-                return
-
-            usernames = len([row[0] for row in ip_info if row[0] is not None])
-            hashes = len([row[2] for row in ip_info if row[2] is not None])
-            passwords = len([row[1] for row in ip_info if row[1] is not None])
-
-            await message.answer(
-                text("ip_info").format(
-                    ip=txt,
-                    usernames=f"найдено ({usernames})" if usernames > 0 else "не найдено",
-                    hashes=f"найдено ({hashes})" if hashes > 0 else "не найдено",
-                    passwords=f"найдено ({passwords})" if passwords > 0 else "не найдено",
-                ),
-                reply_markup=subscription_kb(txt, any([usernames > 0, hashes > 0, passwords > 0])),
-            )
-            return
-
-        user_info = bd.get_user(txt)
-        if not user_info:
-            await message.answer(text("user_not_found"))
-            return
-
-        hashes = len([row[2] for row in user_info if row[2] is not None])
-        passwords = len([row[1] for row in user_info if row[1] is not None])
-        ips = len([row[3] for row in user_info if row[3] is not None])
-
-        await message.answer(
-            text("user_info").format(
-                username=txt,
-                hashes=f"найдено ({hashes})" if hashes > 0 else "не найдено",
-                passwords=f"найдено ({passwords})" if passwords > 0 else "не найдено",
-                ips=f"найдено ({ips})" if ips > 0 else "не найдено",
-            ),
-            reply_markup=subscription_kb(txt, any([hashes > 0, passwords > 0, ips > 0])),
-        )
+        for txt in message.text.split("\n"):
+            if not txt:
+                continue
+            if helpers.get_hashtype(txt):
+                hashes = [h for h in helpers.get_hashtype(txt) if h["hashcat"] is not None]
+                if hashes:
+                    await message.answer(f"Это скорее всего хеш <code>{hashes[0]["name"]}</code>\nК сожалению, мы не можем его расшифровать")
+                    return
+            result = search_ip(txt) if helpers.is_ip_address(txt) else search_user(txt)
+            await message.answer(result[0], reply_markup=result[1])
 
     except Exception as e:
         print(e)
@@ -86,7 +83,7 @@ async def _(callback: types.CallbackQuery) -> None:
         }
 
         entry = "\n".join(f"{key}: <code>{value}</code>" for key, value in details.items() if value)
-        buffer += f"{entry}\n\n"
+        buffer += f"{entry}\n———————————————————————\n"
 
         if index % 5 == 0:
             messages.append(buffer)

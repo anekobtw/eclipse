@@ -32,7 +32,6 @@ async def reset_limits() -> None:
 
 
 async def run_bot() -> None:
-    os.system("clear")
     load_dotenv("config/.env")
     logging.basicConfig(
         level=logging.INFO,

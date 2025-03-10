@@ -26,7 +26,7 @@ async def _(message: types.Message) -> None:
         if subscription in ["premium", "premium+"] and parse_duration(time):
             id = str(uuid.uuid4())
             refd.add_refid(id, uses_left, subscription, time)
-            await message.answer(f"t.me/eclipse_mc_bot?start={id}")
+            await message.answer(f"t.me/insomniachecker_bot?start={id}")
         else:
             await message.answer("Ты ввел что-то неверно.")
 
@@ -99,7 +99,7 @@ async def _(message: types.Message) -> None:
             subscription_until=user[2],
             quota=user[3],
             quota_max={"free": 5, "premium": 20, "premium+": 100}[user[1]],
-            link=f"t.me/eclipse_mc_bot?start={message.from_user.id}",
+            link=f"t.me/insomniachecker_bot?start={message.from_user.id}",
         )
     )
 
@@ -116,7 +116,7 @@ async def _(callback: types.CallbackQuery) -> None:
             subscription_until=user[2],
             quota=user[3],
             quota_max={"free": 5, "premium": 20, "premium+": 100}[user[1]],
-            link=f"t.me/eclipse_mc_bot?start={callback.from_user.id}",
+            link=f"t.me/insomniachecker_bot?start={callback.from_user.id}",
         ),
         reply_markup=back_kb(),
     )
