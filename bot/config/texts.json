@@ -16,6 +16,6 @@
     "error": "Произошла ошибка. Повторите позже.",
     "error_limit": "❌ <b>У вас закончился лимит.</b> Обновление лимита будет в <code>0:00</code>\n\n<b>⚠️ Для увеличения лимита необходимо приобрести подписку!</b>",
 
-    "ref_error": "/ref {<code>premium</code> | <code>premium+</code>} {время (<code>30d</code>)} {кол-во использований (<code>1</code>)}"
+    "ref_error": "/ref {<code>premium</code> | <code>premium+</code>} {время} {кол-во использований}\nНапример: <code>/ref premium 30d 1</code>"
 
 }

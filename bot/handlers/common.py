@@ -1,89 +1,82 @@
+import asyncio
+
 from aiogram import F, Router, types
 
 import handlers.helpers as helpers
-from db import BasesDatabase, UsersDatabase
+from db import BasesDatabase, Referral, ReferralsDatabase, User, UsersDatabase
 from handlers.helpers import text
 from handlers.keyboards import subscription_kb
 
 router = Router()
 bd = BasesDatabase()
 ud = UsersDatabase()
+rd = ReferralsDatabase()
 
 
-def search_ip(ip: str) -> list:
-    ip_info = bd.get_by_ip(ip)
-    if not ip_info:
-        return [text("ip_not_found"), None]
+def format_search_result(entity: str, entity_type: str, entity_info: list[tuple]) -> list:
+    counts = {
+        "usernames": sum(1 for row in entity_info if len(row) > 0 and row[0]),
+        "passwords": sum(1 for row in entity_info if len(row) > 1 and row[1]),
+        "hashes": sum(1 for row in entity_info if len(row) > 2 and row[2]),
+        "ips": sum(1 for row in entity_info if len(row) > 3 and row[3])
+    }
 
-    usernames = len([row[0] for row in ip_info if row[0] is not None])
-    hashes = len([row[2] for row in ip_info if row[2] is not None])
-    passwords = len([row[1] for row in ip_info if row[1] is not None])
+    match entity_type:
+        case "ip":
+            txt = text(f"{entity_type}_info").format(
+                ip=entity,
+                usernames=f"найдено ({counts["usernames"]})" if counts["usernames"] else "не найдено",
+                hashes=f"найдено ({counts["hashes"]})" if counts["hashes"] else "не найдено",
+                passwords=f"найдено ({counts["passwords"]})" if counts["passwords"] else "не найдено"
+            )
+        case "user":
+            txt = text(f"{entity_type}_info").format(
+                username=entity,
+                ips=f"найдено ({counts["ips"]})" if counts["ips"] else "не найдено",
+                hashes=f"найдено ({counts["hashes"]})" if counts["hashes"] else "не найдено",
+                passwords=f"найдено ({counts["passwords"]})" if counts["passwords"] else "не найдено"
+            )
+    return [txt, subscription_kb(entity, any(counts.values()))]
 
-    return [text("ip_info").format(
-            ip=ip,
-            usernames=f"найдено ({usernames})" if usernames > 0 else "не найдено",
-            hashes=f"найдено ({hashes})" if hashes > 0 else "не найдено",
-            passwords=f"найдено ({passwords})" if passwords > 0 else "не найдено",
-        ), subscription_kb(ip, any([usernames>0, hashes>0, passwords>0]))]
 
-
-def search_user(user: str) -> list:
-    user_info = bd.get_user(user)
-    if not user_info:
-        return [text("user_not_found"), None]
-
-    hashes = len([row[2] for row in user_info if row[2] is not None])
-    passwords = len([row[1] for row in user_info if row[1] is not None])
-    ips = len([row[3] for row in user_info if row[3] is not None])
-
-    return [text("user_info").format(
-            username=user,
-            hashes=f"найдено ({hashes})" if hashes > 0 else "не найдено",
-            passwords=f"найдено ({passwords})" if passwords > 0 else "не найдено",
-            ips=f"найдено ({ips})" if ips > 0 else "не найдено",
-        ), subscription_kb(user, any([ips>0, hashes>0, passwords>0]))]
+def search_entity(value: str) -> list:
+    entity_info, entity_type = (bd.get_by_ip(value), "ip") if helpers.is_ip_address(value) else (bd.get_user(value), "user")
+    return format_search_result(value, entity_type, entity_info) if entity_info else [text(f"{entity_type}_not_found"), None]
 
 
 @router.message(F.text)
-async def _(message: types.Message) -> None:
-    try:
-        for txt in message.text.split("\n"):
-            if not txt:
-                continue
-            if helpers.get_hashtype(txt):
-                hashes = [h for h in helpers.get_hashtype(txt) if h["hashcat"] is not None]
-                if hashes:
-                    await message.answer(f"Это скорее всего хеш <code>{hashes[0]["name"]}</code>\nК сожалению, мы не можем его расшифровать")
-                    return
-            result = search_ip(txt) if helpers.is_ip_address(txt) else search_user(txt)
-            await message.answer(result[0], reply_markup=result[1])
+async def process_message(message: types.Message) -> None:
+    for line in message.text.split("\n"):
+        if not line:
+            continue
 
-    except Exception as e:
-        print(e)
-        await message.answer(text("error"))
+        hashes = [h for h in helpers.get_hashtype(line) if h["hashcat"]]
+        if hashes:
+            await message.answer(f"Это скорее всего хеш <code>{hashes[0]['name']}</code>\nК сожалению, мы не можем его расшифровать")
+            return
+
+        result = search_entity(line)
+        msg = await message.answer(result[0], reply_markup=result[1])
+        if result[1] == None:
+            await asyncio.sleep(3)
+            await msg.delete()
 
 
 @router.callback_query(F.data.startswith("btn_watch"))
-async def _(callback: types.CallbackQuery) -> None:
-    if ud.get_user(callback.from_user.id)[3] == 0:
+async def process_callback(callback: types.CallbackQuery) -> None:
+    user = ud.get_user(callback.from_user.id)
+    if not user or user.quota == 0:
         await callback.message.answer(text("error_limit"))
         return
 
-    ud.update_user(callback.from_user.id, "quota", ud.get_user(callback.from_user.id)[3] - 1)
-    user_data = bd.get_by_ip(callback.data[10:]) if helpers.is_ip_address(callback.data[10:]) else bd.get_user(callback.data[10:])
+    ud.update_user(callback.from_user.id, "quota", user.quota - 1)
+    entity_value = callback.data[10:]
+    entity_info = bd.get_by_ip(entity_value) if helpers.is_ip_address(entity_value) else bd.get_user(entity_value)
 
     messages, buffer = [], ""
-    for index, user in enumerate(user_data, start=1):
-        details = {
-            "👤 Никнейм": user[0],
-            "🔑 Пароль": user[1],
-            "🔒 Хеш": user[2],
-            "🌍 Айпи": user[3],
-            "💻 Сервер": user[4],
-        }
-
-        entry = "\n".join(f"{key}: <code>{value}</code>" for key, value in details.items() if value)
-        buffer += f"{entry}\n———————————————————————\n"
+    for index, entry in enumerate(entity_info, start=1):
+        details = {k: v for k, v in zip(["👤 Никнейм", "🔑 Пароль", "🔒 Хеш", "🌍 Айпи", "💻 Сервер"], entry) if v}
+        buffer += "\n".join(f"{key}: <code>{value}</code>" for key, value in details.items()) + "\n———————————————————————\n"
 
         if index % 5 == 0:
             messages.append(buffer)

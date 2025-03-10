@@ -1,6 +1,6 @@
 import sqlite3
 from contextlib import closing
-from typing import Any, Literal, Optional
+from typing import Any, List, Literal, Optional
 
 
 class BaseDatabase:
@@ -10,54 +10,77 @@ class BaseDatabase:
         self._initialize_db()
 
     def _initialize_db(self) -> None:
-        """Creates table if it doesn't exist."""
         with sqlite3.connect(self.db_path) as conn, closing(conn.cursor()) as cursor:
-            cursor.execute(self.schema)
+            cursor.executescript(self.schema)
             conn.commit()
 
     def execute(self, query: str, params: tuple = ()) -> None:
-        """Executes a query that does not return data (INSERT, UPDATE, DELETE)."""
         with sqlite3.connect(self.db_path) as conn, closing(conn.cursor()) as cursor:
             cursor.execute(query, params)
             conn.commit()
 
     def fetchone(self, query: str, params: tuple = ()) -> Optional[tuple]:
-        """Executes a query that returns a single row."""
         with sqlite3.connect(self.db_path) as conn, closing(conn.cursor()) as cursor:
             cursor.execute(query, params)
             return cursor.fetchone()
 
-    def fetchall(self, query: str, params: tuple = ()) -> list[tuple]:
-        """Executes a query that returns multiple rows."""
+    def fetchall(self, query: str, params: tuple = ()) -> List[tuple]:
         with sqlite3.connect(self.db_path) as conn, closing(conn.cursor()) as cursor:
             cursor.execute(query, params)
             return cursor.fetchall()
 
 
+class User:
+    def __init__(self, user_id: int, subscription: str, subscription_until: Optional[str], quota: int, invited: int) -> None:
+        self.user_id = user_id
+        self.subscription = subscription
+        self.subscription_until = subscription_until
+        self.quota = quota
+        self.invited = invited
+
+    @classmethod
+    def from_tuple(cls, data: tuple) -> "User":
+        return cls(*data)
+
+
+class Referral:
+    def __init__(self, ref_id: str, uses_left: int, subscription: Literal["premium", "premium+"], time: str) -> None:
+        self.ref_id = ref_id
+        self.uses_left = uses_left
+        self.subscription = subscription
+        self.time = time
+
+    @classmethod
+    def from_tuple(cls, data: tuple) -> "Referral":
+        return cls(*data)
+
+
 class UsersDatabase(BaseDatabase):
     def __init__(self) -> None:
         super().__init__(
-            db_path="databases/usersdb.db",
+            db_path="databases/botdb.db",
             schema="""
                 CREATE TABLE IF NOT EXISTS users (
-                    user_id INTEGER,
+                    user_id INTEGER PRIMARY KEY,
                     subscription TEXT,
                     subscription_until DATETIME DEFAULT NULL,
                     quota INTEGER,
                     invited INTEGER
-                )
+                );
             """,
         )
 
-    def add_user(self, user_id: int, subscription: str, subscription_until: str, quota: int, invited: int) -> None:
-        if not self.get_user(user_id):
-            self.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?)", (user_id, subscription, subscription_until, quota, invited))
+    def add_user(self, user: User) -> None:
+        if not self.get_user(user.user_id):
+            self.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?)", (user.user_id, user.subscription, user.subscription_until, user.quota, user.invited))
 
-    def get_user(self, user_id: int) -> Optional[tuple]:
-        return self.fetchone("SELECT * FROM users WHERE user_id = ? LIMIT 1", (user_id,))
+    def get_user(self, user_id: int) -> Optional[User]:
+        data = self.fetchone("SELECT * FROM users WHERE user_id = ? LIMIT 1", (user_id,))
+        return User.from_tuple(data) if data else None
 
-    def get_all(self) -> list[tuple]:
-        return self.fetchall("SELECT * FROM users")
+    def get_all(self) -> list[User]:
+        data = self.fetchall("SELECT * FROM users")
+        return [User.from_tuple(row) for row in data]
 
     def update_user(self, user_id: int, key: str, value: Any) -> None:
         if key not in ("subscription", "subscription_until", "quota", "invited"):
@@ -65,31 +88,33 @@ class UsersDatabase(BaseDatabase):
         self.execute(f"UPDATE users SET {key} = ? WHERE user_id = ?", (value, user_id))
 
 
-class RefIDsDatabase(BaseDatabase):
+class ReferralsDatabase(BaseDatabase):
     def __init__(self) -> None:
         super().__init__(
-            db_path="databases/refids.db",
+            db_path="databases/botdb.db",
             schema="""
                 CREATE TABLE IF NOT EXISTS refids (
-                    ref_id TEXT,
+                    ref_id TEXT PRIMARY KEY,
                     uses_left INTEGER,
                     subscription TEXT,
                     time TEXT
-                )
+                );
             """,
         )
 
-    def add_refid(self, ref_id: str, uses_left: int, subscription: Literal["premium", "premium+"], time: str) -> None:
-        if not self.get_refid(ref_id):
-            self.execute("INSERT INTO refids VALUES (?, ?, ?, ?)", (ref_id, uses_left, subscription, time))
+    def add_referral(self, referral: Referral) -> None:
+        if not self.get_referral(referral.ref_id):
+            self.execute("INSERT INTO refids VALUES (?, ?, ?, ?)", (referral.ref_id, referral.uses_left, referral.subscription, referral.time))
 
-    def get_refid(self, ref_id: str) -> Optional[tuple]:
-        return self.fetchone("SELECT * FROM refids WHERE ref_id = ? LIMIT 1", (ref_id,))
+    def get_referral(self, ref_id: str) -> Optional[Referral]:
+        data = self.fetchone("SELECT * FROM refids WHERE ref_id = ? LIMIT 1", (ref_id,))
+        return Referral.from_tuple(data) if data else None
 
-    def use_refid(self, ref_id: str) -> None:
-        if self.get_refid(ref_id):
+    def use_referral(self, ref_id: str) -> None:
+        referral = self.get_referral(ref_id)
+        if referral:
             self.execute("UPDATE refids SET uses_left = uses_left - 1 WHERE ref_id = ?", (ref_id,))
-            if self.get_refid(ref_id)[1] == 0:
+            if referral.uses_left == 1:
                 self.execute("DELETE FROM refids WHERE ref_id = ?", (ref_id,))
 
 
@@ -104,20 +129,14 @@ class BasesDatabase(BaseDatabase):
                     hash TEXT,
                     ip TEXT,
                     server TEXT
-                )
+                );
+                CREATE INDEX IF NOT EXISTS idx_username_nocase ON bases(username COLLATE NOCASE);
+                CREATE INDEX IF NOT EXISTS idx_ip ON bases(ip);
             """,
         )
-        self.execute("CREATE INDEX IF NOT EXISTS idx_username_nocase ON bases(username COLLATE NOCASE)")
-        self.execute("CREATE INDEX IF NOT EXISTS idx_ip ON bases (ip)")
 
-    def get_user(self, username: str) -> Optional[tuple]:
+    def get_user(self, username: str) -> List[tuple]:
         return self.fetchall("SELECT * FROM bases WHERE username COLLATE NOCASE = ?", (username,))
 
-    def get_by_ip(self, ip: str) -> Optional[tuple]:
+    def get_by_ip(self, ip: str) -> List[tuple]:
         return self.fetchall("SELECT * FROM bases WHERE ip = ?", (ip,))
-
-
-# Usage:
-# users_db = UsersDatabase()
-# refids_db = RefIDsDatabase()
-# bases_db = BasesDatabase()
