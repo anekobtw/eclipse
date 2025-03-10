@@ -155,3 +155,4 @@ async def _(message: types.Message) -> None:
         for user in users:
             new_quota = {"free": 5, "premium": 20, "premium+": 100}[user.subscription] + user.invited
             ud.update_user(user.user_id, "quota", new_quota)
+    await message.answer("Все лимиты были сброшены!")

@@ -3,7 +3,7 @@ import asyncio
 from aiogram import F, Router, types
 
 import handlers.helpers as helpers
-from db import BasesDatabase, Referral, ReferralsDatabase, User, UsersDatabase
+from db import BasesDatabase, ReferralsDatabase, UsersDatabase
 from handlers.helpers import text
 from handlers.keyboards import subscription_kb
 
