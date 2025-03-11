@@ -24,12 +24,7 @@ async def _(callback: types.CallbackQuery) -> None:
     entity_info = bd.get_by_ip(entity_value) if helpers.is_ip_address(entity_value) else bd.get_user(entity_value)
 
     # Paginate the results (sorry for making this unreadable)
-    pages = ["\n\n".join(
-        f"👤  <b>{entry[0]}</b>" + (f" • {entry[3]}" if entry[3] else "") + "\n" +
-        "\n".join(f"{icon}  <code>{value.strip()}</code>" for icon, value in zip(
-            ["🔑", "🔒", "🌍", "🗄️"], entry[1:]) if value and (icon != "🌍")  # IP is already shown
-        ) for entry in entity_info[i:i + 5]
-    ) for i in range(0, len(entity_info), 5)]
+    pages = ["\n\n".join(f"👤  <b>{entry[0]}</b>" + (f" • {entry[3]}" if entry[3] else "") + "\n" + "\n".join(f"{icon}  <code>{value.strip()}</code>" for icon, value in zip(["🔑", "🔒", "🌍", "🗄️"], entry[1:]) if value and (icon != "🌍")) for entry in entity_info[i : i + 5]) for i in range(0, len(entity_info), 5)]  # IP is already shown
 
     # Handle page navigation
     if page < 0 or page >= len(pages):
