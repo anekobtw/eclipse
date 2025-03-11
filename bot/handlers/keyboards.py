@@ -19,7 +19,7 @@ def start_kb() -> types.InlineKeyboardMarkup:
 def subscription_kb(nickname: str, show: bool) -> types.InlineKeyboardMarkup:
     kb = []
     if show:
-        kb.append([types.InlineKeyboardButton(text="👀 Посмотреть информацию (-1 запрос)", callback_data=f"btn_watch_{nickname}")])
+        kb.append([types.InlineKeyboardButton(text="👀 Посмотреть информацию (-1 запрос)", callback_data=f"btn_watch_1_0_{nickname}")])
     kb.append([types.InlineKeyboardButton(text="💳 Оформить подписку", callback_data="btn_rates")])
     return types.InlineKeyboardMarkup(inline_keyboard=kb)
 
