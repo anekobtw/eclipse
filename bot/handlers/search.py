@@ -60,7 +60,7 @@ async def process_objects(message: types.Message, objects: list[str]) -> None:
             await msg.edit_text(result, reply_markup=kb)
 
     if not_found:
-        await message.answer(f"<b>🙁 Не найдено:</b> {', '.join(not_found)}")
+        await message.answer(f"<b>❌ Не найдено:</b>\n{', '.join(not_found)}")
 
     ud.update_user(message.from_user.id, "searched", user.searched + len(objects))
 
@@ -96,6 +96,6 @@ async def process_nothash(callback: types.CallbackQuery) -> None:
     result = format_search_result(obj, entity_type, entity_info) if entity_info else None
 
     if result is None:
-        await callback.message.answer(f"<b>🙁 Не найдено:</b> {obj}")
+        await callback.message.answer(f"<b>❌ Не найдено:</b>\n{obj}")
     else:
         await callback.message.answer(text=result[0], reply_markup=result[1])
