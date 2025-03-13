@@ -120,6 +120,26 @@ class ReferralsDatabase(BaseDatabase):
                 self.execute("DELETE FROM refids WHERE ref_id = ?", (ref_id,))
 
 
+class HashesDatabase(BaseDatabase):
+    def __init__(self) -> None:
+        super().__init__(
+            db_path="databases/hashes.db",
+            schema="""
+                CREATE TABLE IF NOT EXISTS hashes (
+                    hash TEXT,
+                    password TEXT,
+                );
+            """,
+        )
+
+    def add_hash(self, hash: str, password: str) -> None:
+        if not self.get_hash(hash):
+            self.execute("INSERT INTO refids VALUES (?, ?)", (hash, password))
+
+    def get_hash(self, hash: str) -> tuple | None:
+        return self.fetchone("SELECT * FROM hashes WHERE hash = ? LIMIT 1", (hash,))
+
+
 class BasesDatabase(BaseDatabase):
     def __init__(self) -> None:
         super().__init__(
