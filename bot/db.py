@@ -137,7 +137,8 @@ class HashesDatabase(BaseDatabase):
         data_to_insert = [[hashes[i], passwords[i]] for i in range(len(hashes)-1)]
         with sqlite3.connect(self.db_path) as conn, closing(conn.cursor()) as cursor:
             for i in data_to_insert:
-                cursor.execute("INSERT INTO hashes (hash, password) VALUES (?, ?)", (i[0], i[1]))
+                if self.get_hash(i[0]) is None:
+                    cursor.execute("INSERT INTO hashes (hash, password) VALUES (?, ?)", (i[0], i[1]))
         conn.commit()
 
     def get_hash(self, hash: str) -> tuple | None:
