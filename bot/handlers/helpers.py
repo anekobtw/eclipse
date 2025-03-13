@@ -58,7 +58,7 @@ def get_quota_max(user_id: int) -> int:
     return base_quota + invite_bonus
 
 
-def get_progressbar(user_id: int):
+def get_progressbar(user_id: int) -> str:
     user = ud.get_user(user_id)
     invited = user.invited
     
@@ -71,3 +71,11 @@ def get_progressbar(user_id: int):
     remaining = "□" * (progress_bar_length - len(progress_bar))
   
     return f"{progress_bar}{remaining} {invited}/{next_goal} ({int(progress)}%)"
+
+
+
+def get_all_time_searched() -> int:
+    searched = 0
+    for user in ud.get_all():
+        searched += user.searched
+    return searched

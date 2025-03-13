@@ -45,13 +45,13 @@ async def _(message: types.Message, command: CommandObject) -> None:
 
         ud.update_user(message.from_user.id, "subscription", ref.subscription)
         ud.update_user(message.from_user.id, "quota", {"free": 5, "premium": 20, "premium+": 100}[ref.subscription])
-    await message.answer(text("welcome"), reply_markup=start_kb())
+    await message.answer(text("welcome").format(searched=helpers.get_all_time_searched()), reply_markup=start_kb())
 
 
 @router.message(F.text, Command("menu", "start"))
 async def _(message: types.Message) -> None:
     ud.add_user(User(message.from_user.id, "free", None, 5, 0, 0))
-    await message.answer(text("welcome"), reply_markup=start_kb())
+    await message.answer(text("welcome").format(searched=helpers.get_all_time_searched()), reply_markup=start_kb())
 
 
 @router.callback_query(F.data == "btn_back")
@@ -73,12 +73,12 @@ async def _(callback: types.CallbackQuery) -> None:
 # Support
 @router.message(F.text, Command("support"))
 async def _(message: types.Message) -> None:
-    await message.answer(text("support"), reply_markup=support_kb(False))
+    await message.answer(text("support"), reply_markup=support_kb(False), link_preview_options=types.link_preview_options.LinkPreviewOptions(is_disabled=True))
 
 
 @router.callback_query(F.data == "btn_support")
 async def _(callback: types.CallbackQuery) -> None:
-    await callback.message.edit_text(text("support"), reply_markup=support_kb(True))
+    await callback.message.edit_text(text("support"), reply_markup=support_kb(True), link_preview_options=types.link_preview_options.LinkPreviewOptions(is_disabled=True))
 
 
 # Account
