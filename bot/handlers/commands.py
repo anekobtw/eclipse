@@ -56,7 +56,7 @@ async def _(message: types.Message) -> None:
 
 @router.callback_query(F.data == "btn_back")
 async def _(callback: types.CallbackQuery) -> None:
-    await callback.message.edit_text(text("welcome"), reply_markup=start_kb())
+    await callback.message.edit_text(text("welcome").format(searched=helpers.get_all_time_searched()), reply_markup=start_kb())
 
 
 # Search

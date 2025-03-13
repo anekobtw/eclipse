@@ -44,3 +44,7 @@ def support_kb(back: bool = False) -> types.InlineKeyboardMarkup:
     if back:
         buttons.append([types.InlineKeyboardButton(text="← Назад", callback_data="btn_back")])
     return types.InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def subscribe() -> types.InlineKeyboardMarkup:
+    return types.InlineKeyboardMarkup(inline_keyboard=[[types.InlineKeyboardButton(text="✅ Подписаться", url="t.me/insomniachecker")]])

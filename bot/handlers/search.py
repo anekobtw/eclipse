@@ -5,7 +5,7 @@ from aiogram import Bot, F, Router, types
 import handlers.helpers as helpers
 from db import BasesDatabase, HashesDatabase, UsersDatabase
 from handlers.helpers import text
-from handlers.keyboards import subscription_kb
+from handlers.keyboards import subscription_kb, subscribe
 
 router = Router()
 bd = BasesDatabase()
@@ -56,7 +56,7 @@ async def process_objects(message: types.Message, objects: list[str]) -> None:
         else:
             msg = await message.answer("Я думаю, что это хеш")
             callback_storage[msg.message_id] = obj
-            kb = types.InlineKeyboardMarkup(inline_keyboard=[[types.InlineKeyboardButton(text="⚠️ Это не хеш", callback_data=f"nothash_{msg.message_id}")]])
+            kb = types.InlineKeyboardMarkup(inline_keyboard=[[types.InlineKeyboardButton(text="⚠️ Это не хеш", callback_data=f"nothash")]])
             await msg.edit_text(result, reply_markup=kb)
 
     if not_found:
@@ -65,8 +65,19 @@ async def process_objects(message: types.Message, objects: list[str]) -> None:
     ud.update_user(message.from_user.id, "searched", user.searched + len(objects))
 
 
+async def is_subscribed(user_id, bot: Bot) -> bool:
+    check_member = await bot.get_chat_member(-1002360182485, user_id) 
+    if check_member.status in ["administrator", "member", "creator"]:
+        return True
+    return False
+
+
 @router.message(F.document)
 async def process_document(message: types.Message, bot: Bot) -> None:
+    if not await is_subscribed(message.from_user.id, message.bot):
+        await message.answer(text("not_subscribed"), reply_markup=subscribe())
+        return
+
     filepath = f"{message.from_user.id}.txt"
     await bot.download(message.document, destination=filepath)
 
@@ -79,13 +90,20 @@ async def process_document(message: types.Message, bot: Bot) -> None:
 
 @router.message(F.text)
 async def process_text(message: types.Message) -> None:
+    if not await is_subscribed(message.from_user.id, message.bot):
+        await message.answer(text("not_subscribed"), reply_markup=subscribe())
+        return
+
     objects = message.text.split("\n")
     await process_objects(message, objects)
 
 
-@router.callback_query(F.data.startswith("nothash_"))
+@router.callback_query(F.data.startswith("nothash"))
 async def process_nothash(callback: types.CallbackQuery) -> None:
-    obj_id = callback.data[8:]
+    if not await is_subscribed(callback.from_user.id, callback.bot):
+        await callback.message.answer(text("not_subscribed"), reply_markup=subscribe())
+        return
+
     obj = callback_storage.get(callback.message.message_id, None)
 
     if obj is None:
