@@ -10,7 +10,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv
 
 from db import UsersDatabase
-from handlers import router
+from handlers import helpers, router
 
 ud = UsersDatabase()
 
@@ -28,8 +28,7 @@ async def check_users() -> None:
 async def reset_limits() -> None:
     users = ud.get_all()
     for user in users:
-        new_quota = {"free": 5, "premium": 20, "premium+": 100}[user.subscription] + user.invited
-        ud.update_user(user.user_id, "quota", new_quota)
+        ud.update_user(user.user_id, "quota", helpers.get_quota_max(user.user_id))
 
 
 async def run_bot() -> None:

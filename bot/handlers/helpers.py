@@ -4,6 +4,10 @@ from datetime import timedelta
 
 from name_that_hash import check_hashes, hash_namer, hashes
 
+from db import UsersDatabase
+
+ud = UsersDatabase()
+
 
 # Random
 def text(tag: str) -> str:
@@ -41,3 +45,29 @@ def parse_duration(duration_str) -> timedelta:
         return timedelta(days=num * 30)
     else:
         raise ValueError("Unsupported duration unit")
+
+def get_quota_max(user_id: int) -> int:
+    user = ud.get_user(user_id)
+    base_quota = {"free": 5, "premium": 20, "premium+": 100}[user.subscription]
+    
+    invite_bonus = 0
+    for invite, bonus in {3:5, 10:10, 20:15, 30:20, 50:35, 100:50}.items():
+        if user.invited >= invite:
+            invite_bonus = bonus
+
+    return base_quota + invite_bonus
+
+
+def get_progressbar(user_id: int):
+    user = ud.get_user(user_id)
+    invited = user.invited
+    
+    goals = [3, 10, 20, 30, 50, 100]
+    next_goal = next(goal for goal in goals if invited < goal)
+    
+    progress = (invited / next_goal) * 100
+    progress_bar_length = 20 
+    progress_bar = "■" * int(progress / 100 * progress_bar_length)
+    remaining = "□" * (progress_bar_length - len(progress_bar))
+  
+    return f"{progress_bar}{remaining} {invited}/{next_goal} ({int(progress)}%)"

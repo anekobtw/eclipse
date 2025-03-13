@@ -5,7 +5,7 @@ from aiogram import Bot, F, Router, exceptions, types
 from aiogram.filters import Command
 
 from db import HashesDatabase, Referral, ReferralsDatabase, UsersDatabase
-from handlers.helpers import parse_duration, text
+from handlers.helpers import get_quota_max, parse_duration, text
 
 router = Router()
 refd = ReferralsDatabase()
@@ -61,5 +61,5 @@ async def _(message: types.Message) -> None:
         users = ud.get_all()
         for user in users:
             new_quota = {"free": 5, "premium": 20, "premium+": 100}[user.subscription] + user.invited
-            ud.update_user(user.user_id, "quota", new_quota)
+            ud.update_user(user.user_id, "quota", get_quota_max(message.from_user.id))
     await message.answer("Все лимиты были сброшены!")

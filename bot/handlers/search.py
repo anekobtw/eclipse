@@ -29,7 +29,7 @@ def handle_message(text: str) -> str | tuple[str, types.InlineKeyboardMarkup] | 
         password = hd.get_hash(text)
         if password:
             return f"<code>{text}</code> - это скорее всего хеш <code>{hashes[0]['name']}</code>\n\n✅ У нас получилось его расшифровать: <code>{password[1]}</code>"
-        return f"<code>{text}</code> - это скорее всего хеш <code>{hashes[0]['name']}</code>\nК сожалению, мы не можем его расшифровать"
+        return f"<code>{text}</code> - это скорее всего хеш <code>{hashes[0]['name']}</code>\n\nК сожалению, мы не можем его расшифровать"
 
     entity_info, entity_type = (bd.get_by_ip(text), "ip") if helpers.is_ip_address(text) else (bd.get_user(text), "user")
     return format_search_result(text, entity_type, entity_info) if entity_info else None

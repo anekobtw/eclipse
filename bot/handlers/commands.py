@@ -1,10 +1,10 @@
-import uuid
 from datetime import datetime
 
 from aiogram import F, Router, types
 from aiogram.filters import Command, CommandObject, CommandStart
 
-from db import Referral, ReferralsDatabase, User, UsersDatabase
+from db import ReferralsDatabase, User, UsersDatabase
+from handlers import helpers
 from handlers.helpers import parse_duration, text
 from handlers.keyboards import back_kb, purchase_kb, start_kb, support_kb
 
@@ -93,10 +93,13 @@ async def _(message: types.Message) -> None:
             subscription=user.subscription.capitalize(),
             subscription_until=user.subscription_until,
             quota=user.quota,
-            quota_max={"free": 5, "premium": 20, "premium+": 100}[user.subscription],
+            quota_max=helpers.get_quota_max(message.from_user.id),
             searched=user.searched,
             link=f"t.me/insomniachecker_bot?start={message.from_user.id}",
-        )
+            invited=user.invited,
+            progress_bar=helpers.get_progressbar(message.from_user.id)
+        ),
+        link_preview_options=types.link_preview_options.LinkPreviewOptions(is_disabled=True),
     )
 
 
@@ -111,11 +114,14 @@ async def _(callback: types.CallbackQuery) -> None:
             subscription=user.subscription.capitalize(),
             subscription_until=user.subscription_until,
             quota=user.quota,
-            quota_max={"free": 5, "premium": 20, "premium+": 100}[user.subscription],
+            quota_max=helpers.get_quota_max(callback.from_user.id),
             searched=user.searched,
             link=f"t.me/insomniachecker_bot?start={callback.from_user.id}",
+            invited=user.invited,
+            progress_bar=helpers.get_progressbar(callback.from_user.id)
         ),
         reply_markup=back_kb(),
+        link_preview_options=types.link_preview_options.LinkPreviewOptions(is_disabled=True),
     )
 
 
