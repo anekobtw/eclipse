@@ -31,12 +31,13 @@ class BaseDatabase:
 
 
 class User:
-    def __init__(self, user_id: int, subscription: str, subscription_until: Optional[str], quota: int, invited: int) -> None:
+    def __init__(self, user_id: int, subscription: str, subscription_until: Optional[str], quota: int, invited: int, searched: int) -> None:
         self.user_id = user_id
         self.subscription = subscription
         self.subscription_until = subscription_until
         self.quota = quota
         self.invited = invited
+        self.searched = searched
 
     @classmethod
     def from_tuple(cls, data: tuple) -> "User":
@@ -65,14 +66,15 @@ class UsersDatabase(BaseDatabase):
                     subscription TEXT,
                     subscription_until DATETIME DEFAULT NULL,
                     quota INTEGER,
-                    invited INTEGER
+                    invited INTEGER,
+                    searched INTEGER
                 );
             """,
         )
 
     def add_user(self, user: User) -> None:
         if not self.get_user(user.user_id):
-            self.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?)", (user.user_id, user.subscription, user.subscription_until, user.quota, user.invited))
+            self.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?)", (user.user_id, user.subscription, user.subscription_until, user.quota, user.invited, user.searched))
 
     def get_user(self, user_id: int) -> Optional[User]:
         data = self.fetchone("SELECT * FROM users WHERE user_id = ? LIMIT 1", (user_id,))
@@ -83,7 +85,7 @@ class UsersDatabase(BaseDatabase):
         return [User.from_tuple(row) for row in data]
 
     def update_user(self, user_id: int, key: str, value: Any) -> None:
-        if key not in ("subscription", "subscription_until", "quota", "invited"):
+        if key not in ("subscription", "subscription_until", "quota", "invited", "searched"):
             raise ValueError(f"Invalid column name: {key}")
         self.execute(f"UPDATE users SET {key} = ? WHERE user_id = ?", (value, user_id))
 

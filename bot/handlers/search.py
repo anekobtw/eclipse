@@ -11,23 +11,14 @@ router = Router()
 bd = BasesDatabase()
 ud = UsersDatabase()
 
-# Subscription limits
 SUBSCRIPTION_LIMITS = {"free": 20, "premium": 100, "premium+": 300}
 
 
 def format_search_result(entity: str, entity_type: str, entity_info: list[tuple]) -> tuple[str, types.InlineKeyboardMarkup]:
     counts = {"usernames": sum(1 for row in entity_info if len(row) > 0 and row[0]), "passwords": sum(1 for row in entity_info if len(row) > 1 and row[1]), "hashes": sum(1 for row in entity_info if len(row) > 2 and row[2]), "ips": sum(1 for row in entity_info if len(row) > 3 and row[3])}
-
     placeholders = {"usernames": f"найдено ({counts['usernames']})" if counts["usernames"] else "не найдено", "passwords": f"найдено ({counts['passwords']})" if counts["passwords"] else "не найдено", "hashes": f"найдено ({counts['hashes']})" if counts["hashes"] else "не найдено", "ips": f"найдено ({counts['ips']})" if counts["ips"] else "не найдено"}
-
     txt = text(f"{entity_type}_info").format(ip=entity if entity_type == "ip" else "", username=entity if entity_type == "user" else "", **placeholders)
-
     return txt, subscription_kb(entity, any(counts.values()))
-
-
-def search_entity(value: str) -> tuple[str, types.InlineKeyboardMarkup] | None:
-    entity_info, entity_type = (bd.get_by_ip(value), "ip") if helpers.is_ip_address(value) else (bd.get_user(value), "user")
-    return format_search_result(value, entity_type, entity_info) if entity_info else None
 
 
 def handle_message(text: str) -> str | tuple[str, types.InlineKeyboardMarkup] | None:
@@ -35,7 +26,8 @@ def handle_message(text: str) -> str | tuple[str, types.InlineKeyboardMarkup] | 
     if hashes:
         return f"Это скорее всего хеш <code>{hashes[0]['name']}</code>\nК сожалению, мы не можем его расшифровать"
 
-    return search_entity(text)
+    entity_info, entity_type = (bd.get_by_ip(text), "ip") if helpers.is_ip_address(text) else (bd.get_user(text), "user")
+    return format_search_result(text, entity_type, entity_info) if entity_info else None
 
 
 async def process_objects(message: types.Message, objects: list[str]) -> None:
@@ -60,6 +52,8 @@ async def process_objects(message: types.Message, objects: list[str]) -> None:
 
     if not_found:
         await message.answer(f"<b>🙁 Не найдено:</b> {', '.join(not_found)}")
+
+    ud.update_user(message.from_user.id, "searched", ud.get_user(message.from_user.id).searched + len(objects))
 
 
 @router.message(F.document)

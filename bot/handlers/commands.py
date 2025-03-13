@@ -13,6 +13,16 @@ ud = UsersDatabase()
 refd = ReferralsDatabase()
 
 
+@router.message(F.text, Command("reset"))
+async def _(message: types.Message) -> None:
+    if message.from_user.id in [1718021890, 8052123210]:
+        users = ud.get_all()
+        for user in users:
+            new_quota = {"free": 5, "premium": 20, "premium+": 100}[user.subscription] + user.invited
+            ud.update_user(user.user_id, "quota", new_quota)
+    await message.answer("Все лимиты были сброшены!")
+
+
 # Start
 @router.message(F.text, Command("ref"))
 async def _(message: types.Message) -> None:
@@ -38,14 +48,14 @@ async def _(message: types.Message) -> None:
 async def _(message: types.Message, command: CommandObject) -> None:
     if command.args.isdigit():
         # Got that from a user
-        # if ud.get_user(message.from_user.id) is None:
-        ud.add_user(User(message.from_user.id, "free", None, 5, 0))
-        new_invited = ud.get_user(int(command.args)).invited + 1
-        ud.update_user(int(command.args), "invited", new_invited)
+        if ud.get_user(message.from_user.id) is None:
+            ud.add_user(User(message.from_user.id, "free", None, 5, 0, 0))
+            new_invited = ud.get_user(int(command.args)).invited + 1
+            ud.update_user(int(command.args), "invited", new_invited)
 
     else:
         # It's a premium referral link
-        ud.add_user(User(message.from_user.id, "free", None, 5, 0))
+        ud.add_user(User(message.from_user.id, "free", None, 5, 0, 0))
 
         ref = refd.get_referral(command.args)
         refd.use_referral(command.args)
@@ -70,7 +80,7 @@ async def _(message: types.Message, command: CommandObject) -> None:
 
 @router.message(F.text, Command("menu", "start"))
 async def _(message: types.Message) -> None:
-    ud.add_user(User(message.from_user.id, "free", None, 5, 0))
+    ud.add_user(User(message.from_user.id, "free", None, 5, 0, 0))
     await message.answer(text("welcome"), reply_markup=start_kb())
 
 
@@ -114,6 +124,7 @@ async def _(message: types.Message) -> None:
             subscription_until=user.subscription_until,
             quota=user.quota,
             quota_max={"free": 5, "premium": 20, "premium+": 100}[user.subscription],
+            searched=user.searched,
             link=f"t.me/insomniachecker_bot?start={message.from_user.id}",
         )
     )
@@ -131,6 +142,7 @@ async def _(callback: types.CallbackQuery) -> None:
             subscription_until=user.subscription_until,
             quota=user.quota,
             quota_max={"free": 5, "premium": 20, "premium+": 100}[user.subscription],
+            searched=user.searched,
             link=f"t.me/insomniachecker_bot?start={callback.from_user.id}",
         ),
         reply_markup=back_kb(),
@@ -146,13 +158,3 @@ async def _(message: types.Message) -> None:
 @router.callback_query(F.data == "btn_rates")
 async def _(callback: types.CallbackQuery) -> None:
     await callback.message.edit_text(text("rates"), reply_markup=purchase_kb(True))
-
-
-@router.message(F.text, Command("reset"))
-async def _(message: types.Message) -> None:
-    if message.from_user.id in [1718021890, 8052123210]:
-        users = ud.get_all()
-        for user in users:
-            new_quota = {"free": 5, "premium": 20, "premium+": 100}[user.subscription] + user.invited
-            ud.update_user(user.user_id, "quota", new_quota)
-    await message.answer("Все лимиты были сброшены!")
