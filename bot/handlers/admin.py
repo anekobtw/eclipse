@@ -37,6 +37,7 @@ async def _(message: types.Message, bot: Bot) -> None:
             passwords.append(password)
         hd.add_hashes(hashes, passwords)
     os.remove("hashes.txt")
+    await message.answer("✅ Все хеши были успешно добавлены в базу!")
 
 
 @router.message(F.text, Command("ref"))
