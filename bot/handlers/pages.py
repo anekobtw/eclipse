@@ -1,5 +1,6 @@
-import handlers.helpers as helpers
 from aiogram import F, Router, types
+
+import handlers.helpers as helpers
 from db import BasesDatabase, ReferralsDatabase, UsersDatabase
 
 router = Router()

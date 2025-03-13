@@ -7,8 +7,9 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from db import UsersDatabase
 from dotenv import load_dotenv
+
+from db import UsersDatabase
 from handlers import router
 
 ud = UsersDatabase()
