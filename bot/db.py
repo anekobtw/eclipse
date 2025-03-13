@@ -133,9 +133,12 @@ class HashesDatabase(BaseDatabase):
             """,
         )
 
-    def add_hash(self, hash: str, password: str) -> None:
-        if not self.get_hash(hash):
-            self.execute("INSERT INTO hashes VALUES (?, ?)", (hash, password))
+    def add_hashes(self, hashes: list[str], passwords: list[str]) -> None:
+        data_to_insert = [[hashes[i], passwords[i]] for i in range(len(hashes)-1)]
+        with sqlite3.connect(self.db_path) as conn, closing(conn.cursor()) as cursor:
+            for i in data_to_insert:
+                cursor.execute("INSERT INTO hashes (hash, password) VALUES (?, ?)", (i[0], i[1]))
+        conn.commit()
 
     def get_hash(self, hash: str) -> tuple | None:
         return self.fetchone("SELECT * FROM hashes WHERE hash = ? LIMIT 1", (hash,))

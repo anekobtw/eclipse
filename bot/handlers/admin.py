@@ -25,13 +25,17 @@ async def _(message: types.Message, bot: Bot) -> None:
         return
 
     with open("hashes.txt", "r") as f:
+        hashes = []
+        passwords = []
         for line in f:
             line = line.strip()
             if not line:
                 continue
 
             hash, password = line.split(":")
-            hd.add_hash(hash, password)
+            hashes.append(hash)
+            passwords.append(password)
+        hd.add_hashes(hashes, passwords)
     os.remove("hashes.txt")
 
 
