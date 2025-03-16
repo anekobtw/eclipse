@@ -11,7 +11,7 @@ rd = ReferralsDatabase()
 
 @router.callback_query(F.data.startswith("btn_watch_"))
 async def _(callback: types.CallbackQuery) -> None:
-    _, _, is_first, page, entity_value = callback.data.split("_")
+    _, _, is_first, page, entity_value = callback.data.split("₽")
     page = int(page)
 
     if is_first == "1":
@@ -34,9 +34,9 @@ async def _(callback: types.CallbackQuery) -> None:
     keyboard = types.InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                types.InlineKeyboardButton(text="⬅️", callback_data=f"btn_watch_0_{page-1}_{entity_value}"),
+                types.InlineKeyboardButton(text="⬅️", callback_data=f"btn₽watch₽0₽{page-1}₽{entity_value}"),
                 types.InlineKeyboardButton(text=f"{page+1}/{len(pages)}", callback_data="nothing"),
-                types.InlineKeyboardButton(text="➡️", callback_data=f"btn_watch_0_{page+1}_{entity_value}"),
+                types.InlineKeyboardButton(text="➡️", callback_data=f"btn₽watch₽0₽{page+1}₽{entity_value}"),
             ],
         ]
     )
