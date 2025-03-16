@@ -9,7 +9,7 @@ ud = UsersDatabase()
 rd = ReferralsDatabase()
 
 
-@router.callback_query(F.data.startswith("btn_watch_"))
+@router.callback_query(F.data.startswith("btn₽watch₽"))
 async def _(callback: types.CallbackQuery) -> None:
     _, _, is_first, page, entity_value = callback.data.split("₽")
     page = int(page)
