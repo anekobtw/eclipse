@@ -126,7 +126,7 @@ class HashesDatabase(BaseDatabase):
             db_path="databases/hashes.db",
             schema="""
                 CREATE TABLE IF NOT EXISTS hashes (
-                    hash TEXT,
+                    hash TEXT UNIQUE,
                     password TEXT
                 );
                 CREATE INDEX IF NOT EXISTS idx_hash ON hashes(hash);
@@ -134,15 +134,20 @@ class HashesDatabase(BaseDatabase):
         )
 
     def add_hashes(self, hashes: list[str], passwords: list[str]) -> None:
-        data_to_insert = [[hashes[i], passwords[i]] for i in range(len(hashes)-1)]
+        data_to_insert = list(zip(hashes, passwords))
         with sqlite3.connect(self.db_path) as conn, closing(conn.cursor()) as cursor:
-            for i in data_to_insert:
-                if self.get_hash(i[0]) is None:
-                    cursor.execute("INSERT INTO hashes (hash, password) VALUES (?, ?)", (i[0], i[1]))
-        conn.commit()
+            cursor.executemany(
+                "INSERT OR IGNORE INTO hashes (hash, password) VALUES (?, ?)",
+                data_to_insert
+            )
+            conn.commit()
 
-    def get_hash(self, hash: str) -> tuple | None:
-        return self.fetchone("SELECT * FROM hashes WHERE hash = ? LIMIT 1", (hash,))
+    def get_hash(self, hash: str, cursor=None) -> tuple | None:
+        if cursor is not None:
+            cursor.execute("SELECT * FROM hashes WHERE hash = ? LIMIT 1", (hash,))
+            return cursor.fetchone()
+        else:
+            return self.fetchone("SELECT * FROM hashes WHERE hash = ? LIMIT 1", (hash,))
 
 
 class BasesDatabase(BaseDatabase):
