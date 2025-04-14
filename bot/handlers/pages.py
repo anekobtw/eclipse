@@ -9,7 +9,7 @@ router = Router()
 def generate_page(value: str, entity_info: str, page: int) -> tuple[str, types.InlineKeyboardMarkup]:
     pages = ["\n\n".join(f"👤  <b>{entry[0]}</b>" + (f" • {entry[3]}" if entry[3] else "") + "\n" + "\n".join(f"{icon}  <code>{value.strip()}</code>" for icon, value in zip(["🔑", "🔒", "🌍", "🗄️"], entry[1:]) if value and (icon != "🌍")) for entry in entity_info[i : i + 5]) for i in range(0, len(entity_info), 5)]
 
-    if page < 0 or page+1 > len(pages):
+    if page < 0 or page + 1 > len(pages):
         raise ValueError("Invalid page number")
 
     keyboard = types.InlineKeyboardMarkup(

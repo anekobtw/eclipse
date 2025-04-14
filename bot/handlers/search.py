@@ -28,7 +28,7 @@ async def process_objects(message: types.Message, objects: list[str]) -> None:
     if len(objects) > Constants.SEARCH_LIMIT.value:
         await message.answer(Errors.LENGTH_LIMIT_ERROR.value)
         return
-    
+
     not_found = []
     for obj in objects:
         if not obj:
@@ -55,7 +55,6 @@ async def process_objects(message: types.Message, objects: list[str]) -> None:
 
         Databases.USERS.value.update_user(message.from_user.id, "searched", user[2] + 1)
         Databases.USERS.value.update_user(message.from_user.id, "quota", user[1] - 1)
-       
 
     if not_found:
         await message.answer(f"<b>❌ Не найдено:</b>\n{', '.join(not_found)}")
