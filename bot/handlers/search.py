@@ -31,6 +31,8 @@ async def process_objects(message: types.Message, objects: list[str]) -> None:
 
     not_found = []
     for obj in objects:
+        Databases.USERS.value.update_user(message.from_user.id, "searched", user[1] + 1)
+ 
         if not obj:
             continue
 
@@ -53,7 +55,6 @@ async def process_objects(message: types.Message, objects: list[str]) -> None:
             kb = types.InlineKeyboardMarkup(inline_keyboard=[[types.InlineKeyboardButton(text="⚠️ Это не хеш", callback_data=f"nothash")]])
             await msg.edit_text(result, reply_markup=kb)
 
-        Databases.USERS.value.update_user(message.from_user.id, "searched", user[2] + 1)
         Databases.USERS.value.update_user(message.from_user.id, "quota", user[1] - 1)
 
     if not_found:
