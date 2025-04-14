@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import os
-from datetime import datetime
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -13,16 +12,6 @@ from db import UsersDatabase
 from handlers import helpers, router
 
 ud = UsersDatabase()
-
-
-async def check_users() -> None:
-    users = ud.get_all()
-    for user in users:
-        if user.subscription_until is not None:
-            if datetime.now() >= datetime.strptime(user.subscription_until, "%Y-%m-%d %H:%M:%S.%f"):
-                ud.update_user(user.user_id, "subscription", "free")
-                ud.update_user(user.user_id, "subscription_until", None)
-                ud.update_user(user.user_id, "quota", 5)
 
 
 async def reset_limits() -> None:
@@ -40,7 +29,6 @@ async def run_bot() -> None:
     )
 
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(check_users, "interval", minutes=1)
     scheduler.add_job(reset_limits, "cron", hour=0, minute=0)
     scheduler.start()
 

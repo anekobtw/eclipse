@@ -1,6 +1,6 @@
 import sqlite3
 from contextlib import closing
-from typing import Any, List, Literal, Optional
+from typing import Any, List, Optional
 
 
 class BaseDatabase:
@@ -30,32 +30,6 @@ class BaseDatabase:
             return cursor.fetchall()
 
 
-class User:
-    def __init__(self, user_id: int, subscription: str, subscription_until: Optional[str], quota: int, invited: int, searched: int) -> None:
-        self.user_id = user_id
-        self.subscription = subscription
-        self.subscription_until = subscription_until
-        self.quota = quota
-        self.invited = invited
-        self.searched = searched
-
-    @classmethod
-    def from_tuple(cls, data: tuple) -> "User":
-        return cls(*data)
-
-
-class Referral:
-    def __init__(self, ref_id: str, uses_left: int, subscription: Literal["premium", "premium+"], time: str) -> None:
-        self.ref_id = ref_id
-        self.uses_left = uses_left
-        self.subscription = subscription
-        self.time = time
-
-    @classmethod
-    def from_tuple(cls, data: tuple) -> "Referral":
-        return cls(*data)
-
-
 class UsersDatabase(BaseDatabase):
     def __init__(self) -> None:
         super().__init__(
@@ -63,31 +37,26 @@ class UsersDatabase(BaseDatabase):
             schema="""
                 CREATE TABLE IF NOT EXISTS users (
                     user_id INTEGER PRIMARY KEY,
-                    subscription TEXT,
-                    subscription_until DATETIME DEFAULT NULL,
                     quota INTEGER,
-                    invited INTEGER,
                     searched INTEGER
                 );
             """,
         )
 
-    def add_user(self, user: User) -> None:
-        if not self.get_user(user.user_id):
-            self.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?)", (user.user_id, user.subscription, user.subscription_until, user.quota, user.invited, user.searched))
+    def add_user(self, user_id: int, quota: int, searched: int) -> None:
+        if not self.get_user(user_id):
+            self.execute("INSERT INTO users VALUES (?, ?, ?)", (user_id, quota, searched))
 
-    def get_user(self, user_id: int) -> Optional[User]:
-        data = self.fetchone("SELECT * FROM users WHERE user_id = ? LIMIT 1", (user_id,))
-        return User.from_tuple(data) if data else None
+    def get_user(self, user_id: int) -> tuple | None:
+        return self.fetchone("SELECT * FROM users WHERE user_id = ? LIMIT 1", (user_id,))
 
-    def get_all(self) -> list[User]:
-        data = self.fetchall("SELECT * FROM users")
-        return [User.from_tuple(row) for row in data]
+    def get_all(self) -> List[tuple]:
+        return self.fetchall("SELECT * FROM users")
 
-    def update_user(self, user_id: int, key: str, value: Any) -> None:
-        if key not in ("subscription", "subscription_until", "quota", "invited", "searched"):
+    def update_user(self, user_id: int, key: str, new_value: Any) -> None:
+        if key not in ("quota", "searched"):
             raise ValueError(f"Invalid column name: {key}")
-        self.execute(f"UPDATE users SET {key} = ? WHERE user_id = ?", (value, user_id))
+        self.execute(f"UPDATE users SET {key} = ? WHERE user_id = ?", (new_value, user_id))
 
 
 class ReferralsDatabase(BaseDatabase):
@@ -97,27 +66,20 @@ class ReferralsDatabase(BaseDatabase):
             schema="""
                 CREATE TABLE IF NOT EXISTS refids (
                     ref_id TEXT PRIMARY KEY,
-                    uses_left INTEGER,
-                    subscription TEXT,
-                    time TEXT
+                    quota INTEGER
                 );
             """,
         )
 
-    def add_referral(self, referral: Referral) -> None:
-        if not self.get_referral(referral.ref_id):
-            self.execute("INSERT INTO refids VALUES (?, ?, ?, ?)", (referral.ref_id, referral.uses_left, referral.subscription, referral.time))
+    def add_referral(self, ref_id: int, quota: int) -> None:
+        if not self.get_referral(ref_id):
+            self.execute("INSERT INTO refids VALUES (?, ?)", (ref_id, quota))
 
-    def get_referral(self, ref_id: str) -> Optional[Referral]:
-        data = self.fetchone("SELECT * FROM refids WHERE ref_id = ? LIMIT 1", (ref_id,))
-        return Referral.from_tuple(data) if data else None
+    def get_referral(self, ref_id: str) -> tuple | None:
+        return self.fetchone("SELECT * FROM refids WHERE ref_id = ? LIMIT 1", (ref_id,))
 
-    def use_referral(self, ref_id: str) -> None:
-        referral = self.get_referral(ref_id)
-        if referral:
-            self.execute("UPDATE refids SET uses_left = uses_left - 1 WHERE ref_id = ?", (ref_id,))
-            if referral.uses_left == 1:
-                self.execute("DELETE FROM refids WHERE ref_id = ?", (ref_id,))
+    def delete_referral(self, ref_id: str) -> None:
+        self.execute("DELETE FROM refids WHERE ref_id = ?", (ref_id,))
 
 
 class HashesDatabase(BaseDatabase):
@@ -136,10 +98,7 @@ class HashesDatabase(BaseDatabase):
     def add_hashes(self, hashes: list[str], passwords: list[str]) -> None:
         data_to_insert = list(zip(hashes, passwords))
         with sqlite3.connect(self.db_path) as conn, closing(conn.cursor()) as cursor:
-            cursor.executemany(
-                "INSERT OR IGNORE INTO hashes (hash, password) VALUES (?, ?)",
-                data_to_insert
-            )
+            cursor.executemany("INSERT OR IGNORE INTO hashes (hash, password) VALUES (?, ?)", data_to_insert)
             conn.commit()
 
     def get_hash(self, hash: str, cursor=None) -> tuple | None:
@@ -170,5 +129,5 @@ class BasesDatabase(BaseDatabase):
     def get_user(self, username: str) -> List[tuple]:
         return self.fetchall("SELECT * FROM bases WHERE username COLLATE NOCASE = ?", (username,))
 
-    def get_by_ip(self, ip: str) -> List[tuple]:
+    def get_ip(self, ip: str) -> List[tuple]:
         return self.fetchall("SELECT * FROM bases WHERE ip = ?", (ip,))

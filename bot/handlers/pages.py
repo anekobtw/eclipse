@@ -1,45 +1,45 @@
 from aiogram import F, Router, types
 
 import handlers.helpers as helpers
-from db import BasesDatabase, ReferralsDatabase, UsersDatabase
+from enums import Databases
 
 router = Router()
-bd = BasesDatabase()
-ud = UsersDatabase()
-rd = ReferralsDatabase()
 
 
-@router.callback_query(F.data.startswith("btn₽watch₽"))
-async def _(callback: types.CallbackQuery) -> None:
-    _, _, is_first, page, entity_value = callback.data.split("₽")
-    page = int(page)
+def generate_page(value: str, entity_info: str, page: int) -> tuple[str, types.InlineKeyboardMarkup]:
+    pages = ["\n\n".join(f"👤  <b>{entry[0]}</b>" + (f" • {entry[3]}" if entry[3] else "") + "\n" + "\n".join(f"{icon}  <code>{value.strip()}</code>" for icon, value in zip(["🔑", "🔒", "🌍", "🗄️"], entry[1:]) if value and (icon != "🌍")) for entry in entity_info[i : i + 5]) for i in range(0, len(entity_info), 5)]
 
-    if is_first == "1":
-        user = ud.get_user(callback.from_user.id)
-        if not user or user.quota == 0:
-            await callback.message.answer(helpers.text("error_limit"))
-            return
-        ud.update_user(callback.from_user.id, "quota", user.quota - 1)
-
-    entity_info = bd.get_by_ip(entity_value) if helpers.is_ip_address(entity_value) else bd.get_user(entity_value)
-
-    # Paginate the results (sorry for making this unreadable)
-    pages = ["\n\n".join(f"👤  <b>{entry[0]}</b>" + (f" • {entry[3]}" if entry[3] else "") + "\n" + "\n".join(f"{icon}  <code>{value.strip()}</code>" for icon, value in zip(["🔑", "🔒", "🌍", "🗄️"], entry[1:]) if value and (icon != "🌍")) for entry in entity_info[i : i + 5]) for i in range(0, len(entity_info), 5)]  # IP is already shown
-
-    # Handle page navigation
-    if page < 0 or page >= len(pages):
-        await callback.answer("Нет больше страниц.")
-        return
+    if page < 0 or page+1 > len(pages):
+        raise ValueError("Invalid page number")
 
     keyboard = types.InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                types.InlineKeyboardButton(text="⬅️", callback_data=f"btn₽watch₽0₽{page-1}₽{entity_value}"),
+                types.InlineKeyboardButton(text="⬅️", callback_data=f"watch₽{page-1}₽{value}"),
                 types.InlineKeyboardButton(text=f"{page+1}/{len(pages)}", callback_data="nothing"),
-                types.InlineKeyboardButton(text="➡️", callback_data=f"btn₽watch₽0₽{page+1}₽{entity_value}"),
+                types.InlineKeyboardButton(text="➡️", callback_data=f"watch₽{page+1}₽{value}"),
             ],
         ]
     )
 
-    await callback.message.edit_text(pages[page], reply_markup=keyboard)
+    return (pages[page], keyboard)
+
+
+@router.callback_query(F.data.startswith("watch₽"))
+async def _(callback: types.CallbackQuery) -> None:
+    _, page, entity_value = callback.data.split("₽")
+    page = int(page)
+
+    if helpers.is_ip_address(entity_value):
+        entity_info = Databases.BASES.value.get_ip(entity_value)
+    else:
+        entity_info = Databases.BASES.value.get_user(entity_value)
+
+    try:
+        res = generate_page(entity_value, entity_info, page)
+    except ValueError:
+        await callback.answer("Нет больше страниц.")
+        return
+
+    await callback.message.edit_text(res[0], reply_markup=res[1])
     await callback.answer()
