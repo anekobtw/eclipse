@@ -24,9 +24,9 @@ async def _(message: types.Message, command: CommandObject) -> None:
         Databases.USERS.value.add_user(message.from_user.id, 1, 0)
 
         ref = Databases.REFERRALS.value.get_referral(command.args)
-        if not ref:
-            return
-        Databases.USERS.value.update_user(message.from_user.id, "quota", user[1] + ref[1])
+        if ref:
+            Databases.USERS.value.update_user(message.from_user.id, "quota", user[1] + ref[1])
+            Databases.REFERRALS.value.delete_referral(command.args)
 
     await message.answer(Messages.WELCOME.value.format(searched=helpers.get_all_time_searched()), reply_markup=Keyboards.start())
 
