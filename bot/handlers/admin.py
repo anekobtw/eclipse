@@ -11,7 +11,7 @@ router = Router()
 
 @router.message(F.document, Command("output"))
 async def _(message: types.Message, bot: Bot) -> None:
-    if message.from_user.id not in Constants.ADMINS:
+    if message.from_user.id not in Constants.ADMINS.value:
         return
 
     try:
@@ -38,7 +38,7 @@ async def _(message: types.Message, bot: Bot) -> None:
 
 @router.message(F.text, Command("ref"))
 async def _(message: types.Message) -> None:
-    if message.from_user.id not in [1718021890, 8052123210]:
+    if message.from_user.id not in Constants.ADMINS.value:
         return
 
     args = message.text.split(" ")

@@ -31,12 +31,11 @@ async def process_objects(message: types.Message, objects: list[str]) -> None:
 
     not_found = []
     for obj in objects:
+        user = Databases.USERS.value.get_user(message.from_user.id)
         Databases.USERS.value.update_user(message.from_user.id, "searched", user[1] + 1)
  
         if not obj:
             continue
-
-        user = Databases.USERS.value.get_user(message.from_user.id)
 
         if user[1] <= 0:
             await message.answer(Errors.QUOTA_ERROR.value)

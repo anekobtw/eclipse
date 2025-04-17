@@ -8,16 +8,14 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv
 
-from db import UsersDatabase
-from handlers import helpers, router
-
-ud = UsersDatabase()
+from handlers import router
+from enums import Databases
 
 
 async def reset_limits() -> None:
-    users = ud.get_all()
-    for user in users:
-        ud.update_user(user.user_id, "quota", helpers.get_quota_max(user.user_id))
+    for user in Databases.USERS.value.get_all():
+        if user[1] == 0:
+            Databases.USERS.value.update_user(user[0], "quota", 1)
 
 
 async def run_bot() -> None:

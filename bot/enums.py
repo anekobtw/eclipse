@@ -15,7 +15,7 @@ class Databases(Enum):
 class Constants(Enum):
     CHANNEL_ID = -1002360182485
     SEARCH_LIMIT = 100
-    ADMINS = [8052123210, 1718021890]
+    ADMINS = [8052123210, 1718021890, 1338590379]
 
 
 class Messages(Enum):
