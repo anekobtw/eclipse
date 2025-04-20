@@ -8,8 +8,8 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv
 
-from handlers import router
 from enums import Databases
+from handlers import router
 
 
 async def reset_limits() -> None:

@@ -55,8 +55,12 @@ class UsersDatabase(BaseDatabase):
 
     def update_user(self, user_id: int, key: str, new_value: Any) -> None:
         if key not in ("quota", "searched"):
-            raise ValueError(f"Invalid column name: {key}")
-        self.execute(f"UPDATE users SET {key} = ? WHERE user_id = ?", (new_value, user_id))
+            raise ValueError(f"invalid column name: {key}")
+        self.execute(
+            f"UPDATE USERS set {
+                     key} = ? WHERE user_id = ?",
+            (new_value, user_id),
+        )
 
 
 class ReferralsDatabase(BaseDatabase):
@@ -79,15 +83,15 @@ class ReferralsDatabase(BaseDatabase):
         return self.fetchone("SELECT * FROM refids WHERE ref_id = ? LIMIT 1", (ref_id,))
 
     def delete_referral(self, ref_id: str) -> None:
-        self.execute("DELETE FROM refids WHERE ref_id = ?", (ref_id,))
+        if self.get_referral(ref_id):
+            self.execute("DELETE FROM refids WHERE ref_id = ?", (ref_id,))
 
 
 class HashesDatabase(BaseDatabase):
     def __init__(self) -> None:
         super().__init__(
             db_path="databases/hashes.db",
-            schema="""
-                CREATE TABLE IF NOT EXISTS hashes (
+            schema="""CREATE TABLE IF NOT EXISTS hashes (
                     hash TEXT UNIQUE,
                     password TEXT
                 );

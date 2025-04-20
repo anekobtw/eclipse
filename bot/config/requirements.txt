@@ -1,4 +1,4 @@
-aiogram==3.19.0
+aiogram==3.20.0.post0
 APScheduler==3.11.0
 name_that_hash==1.11.0
 python-dotenv==1.1.0

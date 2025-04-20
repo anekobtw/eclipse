@@ -17,7 +17,7 @@ async def _(message: types.Message, command: CommandObject) -> None:
         if user is None:
             Databases.USERS.value.add_user(message.from_user.id, 1, 0)
             referal = Databases.USERS.value.get_user(int(command.args))
-            Databases.USERS.value.update_user(int(command.args), "quota", referal[1] + 5)
+            Databases.USERS.value.update_user(int(command.args), "quota", referal[1] + 10)
 
     else:
         # It's a premium referral link

@@ -18,7 +18,8 @@ def process_object(obj: str) -> str | tuple[str, types.InlineKeyboardMarkup] | N
             return f"<code>{obj}</code> - это скорее всего хеш <code>{hashes[0]['name']}</code>\n\n✅ У нас получилось его расшифровать: <code>{password[1]}</code>"
         return f"<code>{obj}</code> - это скорее всего хеш <code>{hashes[0]['name']}</code>\n\nК сожалению, мы не можем его расшифровать"
 
-    entity_info = Databases.BASES.value.get_ip(obj) if helpers.is_ip_address(obj) else Databases.BASES.value.get_user(obj)
+    entity_info = Databases.BASES.value.get_ip(obj) if helpers.is_ip_address(
+        obj) else Databases.BASES.value.get_user(obj)
     if entity_info:
         return generate_page(obj, entity_info, 0)
     return None
@@ -32,8 +33,9 @@ async def process_objects(message: types.Message, objects: list[str]) -> None:
     not_found = []
     for obj in objects:
         user = Databases.USERS.value.get_user(message.from_user.id)
-        Databases.USERS.value.update_user(message.from_user.id, "searched", user[1] + 1)
- 
+        Databases.USERS.value.update_user(
+            message.from_user.id, "searched", user[2] + 1)
+
         if not obj:
             continue
 
@@ -51,10 +53,12 @@ async def process_objects(message: types.Message, objects: list[str]) -> None:
         else:
             msg = await message.answer("Я думаю, что это хеш")
             callback_storage[msg.message_id] = obj
-            kb = types.InlineKeyboardMarkup(inline_keyboard=[[types.InlineKeyboardButton(text="⚠️ Это не хеш", callback_data=f"nothash")]])
+            kb = types.InlineKeyboardMarkup(inline_keyboard=[
+                                            [types.InlineKeyboardButton(text="⚠️ Это не хеш", callback_data=f"nothash")]])
             await msg.edit_text(result, reply_markup=kb)
 
-        Databases.USERS.value.update_user(message.from_user.id, "quota", user[1] - 1)
+        Databases.USERS.value.update_user(
+            message.from_user.id, "quota", user[1]-1)
 
     if not_found:
         await message.answer(f"<b>❌ Не найдено:</b>\n{', '.join(not_found)}")
@@ -103,7 +107,8 @@ async def process_nothash(callback: types.CallbackQuery) -> None:
         await callback.message.answer(Errors.OLD_DATA_ERROR.value)
         return
 
-    entity_info = Databases.BASES.value.get_ip(obj) if helpers.is_ip_address(obj) else Databases.BASES.value.get_user(obj)
+    entity_info = Databases.BASES.value.get_ip(obj) if helpers.is_ip_address(
+        obj) else Databases.BASES.value.get_user(obj)
     if entity_info:
         result = generate_page(obj, entity_info, 0)
     else:

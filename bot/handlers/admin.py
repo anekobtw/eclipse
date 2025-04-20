@@ -48,4 +48,4 @@ async def _(message: types.Message) -> None:
     args[1]
     id = str(uuid.uuid4())
     Databases.REFERRALS.value.add_referral(id, args[1])
-    await message.answer(f"t.me/anekobtw_dev_bot?start={id}")
+    await message.answer(f"t.me/insomniachecker_bot?start={id}")
