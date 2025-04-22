@@ -126,7 +126,6 @@ class BasesDatabase(BaseDatabase):
                     server TEXT
                 );
                 CREATE INDEX IF NOT EXISTS idx_username_nocase ON bases(username COLLATE NOCASE);
-                CREATE INDEX IF NOT EXISTS idx_ip ON bases(ip);
             """,
         )
 
